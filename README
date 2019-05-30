@@ -1,0 +1,35 @@
+subdl
+=====
+
+A simple shell script that downloads subtitles from opensubtitles.org.
+
+Synopsis
+--------
+
+	subdl [OPTION] [query]
+
+Options
+-------
+
+-e episode     Episode number of a TV show.
+-s season      Season number of a TV show.
+-i IMDBid      IMDB movie title ID. You can get it from IMDB movie page
+               (i.e. https://www.imdb.com/title/tt#######).
+-l language    Three letter language code. Multiple languages can be
+               combined with comma (e.g. ``-l eng,tur'').
+-r results     Number of max. results that will be listed for selection.
+               By default the results will likely fit into your screen.
+-c             Disables chopping long lines.
+-n             Disables manual selecting. The first result will be
+               automatically selected
+
+Examples
+--------
+
+	subdl -s 6 -e 4 game of thrones
+	subdl -n -l eng ./game.of.thrones.s08e00.the.last.watch.web.h264-memento
+
+Installation
+------------
+
+	sudo make install
