@@ -4,7 +4,7 @@
 # Based on: https://forum.opensubtitles.org/viewtopic.php?f=8&t=16453#p39771
 # Dependencies: grep, curl, hexdump, jq, mktemp, tr, tput, gzip
 
-usage="usage: $0 [-e episode] [-i imdbid] [-s season] [-l sublanguageid] [-r results] [-c (no cut)] [-n (non-interactive)] [query]"
+usage="usage: ${0##*/} [-e episode] [-i imdbid] [-s season] [-l sublanguageid] [-r results] [-c (no cut)] [-n (non-interactive)] [query]"
 
 tmpfile=$(mktemp /tmp/subdl-XXXXXX)
 
