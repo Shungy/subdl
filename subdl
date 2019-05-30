@@ -58,13 +58,16 @@ do
 done
 shift $(( OPTIND - 1 ))
 
-if [ -n "$1" ] && [ -z "$query" ]
-then
-	query=$(urlencode "$*")
-elif [ -z "$1" ] && [ "$OPTIND" -eq 1 ]
-then
+[ -z "$1" ] && {
 	echo "$usage"
 	exit 1
+}
+
+if [ -f "$1" ]
+then
+	query=$(urlencode "${1##*/}")
+else
+	query=$(urlencode "$*")
 fi
 
 if [ -z "$rows" ]
