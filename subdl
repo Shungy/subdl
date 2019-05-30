@@ -4,7 +4,7 @@
 # Based on: https://forum.opensubtitles.org/viewtopic.php?f=8&t=16453#p39771
 # Dependencies: grep, curl, hexdump, jq, mktemp, tr, tput, gzip
 
-usage="usage: $0 [-e episode] [-i imdbid] [-b moviebytesize] [-h moviehash] [-s season] [-l sublanguageid] [-t tag] [-r results] [-c (no cut)] [-n (non-interactive)] [query]"
+usage="usage: $0 [-e episode] [-i imdbid] [-s season] [-l sublanguageid] [-r results] [-c (no cut)] [-n (non-interactive)] [query]"
 
 tmpfile=$(mktemp /tmp/subdl-XXXXXX)
 
@@ -17,7 +17,7 @@ urlencode() {
 
 checknum() {
 	echo "$1" | grep '^[0-9]\+$' > /dev/null || {
-		echo season, episode, results and bytesize must be natural numbers.
+		echo season, episode, results must be natural numbers.
 		exit 1
 	}
 }
@@ -26,15 +26,6 @@ checklang() {
 	echo "$1" | grep '^[a-z]\{3\}\(,[a-z]\{3\}\)*$' > /dev/null || {
 		echo language code must be 3 letters.
 		echo multiple languages are separated with comma.
-		exit 1
-	}
-}
-
-checkhash() {
-	echo "$1" | grep '^[[:alnum:]]\{16\}$' > /dev/null &&
-	[ -n "$moviebytesize" ] || {
-		echo hash must have 16 characters.
-		echo hash must be set after moviebytesize.
 		exit 1
 	}
 }
@@ -48,7 +39,7 @@ checkimdbid() {
 }
 
 
-while getopts r:cne:i:b:h:s:l:t: opt
+while getopts r:cne:i:s:l: opt
 do
 	case $opt in
 		r) rows="$OPTARG"               ;;
@@ -58,15 +49,10 @@ do
 		   episode="$OPTARG"            ;;
 		i) checkimdbid "$OPTARG"
 		   imdbid="$OPTARG"             ;;
-		b) checknum "$OPTARG"
-		   moviebytesize="$OPTARG"      ;;
-		h) checkhash "$OPTARG"
-		   moviehash="$OPTARG"          ;;
 		s) checknum "$OPTARG"
 		   season="$OPTARG"             ;;
 		l) checklang "$OPTARG"
 		   sublanguageid="$OPTARG"      ;;
-		t) tag=$(urlencode "$OPTARG")   ;;
 		\?) echo "$usage" ; exit 1      ;;
 	esac
 done
@@ -99,12 +85,9 @@ fi
 curl -s -S -A 'TemporaryUserAgent' "https://rest.opensubtitles.org/search\
 ${episode:+/episode-}${episode}\
 ${imdbid:+/imdbid-}${imdbid}\
-${moviebytesize:+/moviebytesize-}${moviebytesize}\
-${moviehash:+/moviehash-}${moviehash}\
 ${query:+/query-}${query}\
 ${season:+/season-}${season}\
-${sublanguageid:+/sublanguageid-}${sublanguageid}\
-${tag:+/tag-}${tag}" > "$tmpfile"
+${sublanguageid:+/sublanguageid-}${sublanguageid}" > "$tmpfile"
 
 [ -z "$dontask" ] && {
 	jq -e -j --argjson rows "$rows" --argjson cols "$cols" '
