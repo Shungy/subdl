@@ -124,4 +124,4 @@ ${sublanguageid:+/sublanguageid-}${sublanguageid}" > "$tmpfile"
 dlurl=$(jq -j --argjson nu "$nu" '.[$nu].SubDownloadLink' "$tmpfile")
 filename=$(jq -j --argjson nu "$nu" '.[$nu].SubFileName' "$tmpfile")
 
-curl -s -S "$dlurl" | gzip -d > "$filename" && echo Done!
+curl -s -S "$dlurl" | gzip -d > "$filename" && echo Fetched "$filename"
