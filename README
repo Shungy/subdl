@@ -2,6 +2,9 @@ subdl
 =====
 
 A simple shell script that downloads subtitles from opensubtitles.org.
+See this page for more information:
+https://forum.opensubtitles.org/viewtopic.php?f=8&t=16453#p39771
+
 
 Synopsis
 --------
@@ -28,6 +31,11 @@ Examples
 
 	subdl -s 6 -e 4 game of thrones
 	subdl -n -l eng ./game.of.thrones.s08e00.the.last.watch.web.h264-memento\[ettv\].mkv
+
+Dependencies
+------------
+
+jq, curl, hexdump, gzip, tput, mktemp, tr, grep
 
 Installation
 ------------
