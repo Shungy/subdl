@@ -27,7 +27,7 @@ Examples
 --------
 
 	subdl -s 6 -e 4 game of thrones
-	subdl -n -l eng ./game.of.thrones.s08e00.the.last.watch.web.h264-memento
+	subdl -n -l eng ./game.of.thrones.s08e00.the.last.watch.web.h264-memento\[ettv\].mkv
 
 Installation
 ------------
