@@ -1,7 +1,5 @@
 #!/bin/sh
-
-# Download subtitles from opensubtitles.org
-# Based on: https://forum.opensubtitles.org/viewtopic.php?f=8&t=16453#p39771
+# License: MIT (Expat)
 
 usage="usage: ${0##*/} [-e episode] [-i imdbid] [-s season] [-l sublanguageid] [-r results] [-c (no cut)] [-n (non-interactive)] [query]"
 
