@@ -112,12 +112,13 @@ ${sublanguageid:+/sublanguageid-}${sublanguageid}" > "$tmpfile"
 	}
 
 	printf "Subtitle number: "
-	read -r nu && checknum "$nu"
+	read -r nu
 }
 
 [ -z "$nu" ] && {
 	nu=0
 }
+checknum "$nu"
 
 dlurl=$(jq -j --argjson nu "$nu" '.[$nu].SubDownloadLink' "$tmpfile")
 filename=$(jq -j --argjson nu "$nu" '.[$nu].SubFileName' "$tmpfile")
