@@ -34,7 +34,13 @@ Examples
 Dependencies
 ------------
 
-jq, curl, hexdump, gzip, tput, mktemp, tr, grep
+* jq
+* curl
+* grep
+* gzip
+* util-linux (hexdump)
+* coreutils (tr, mktemp)
+* ncurses (tput)
 
 Installation
 ------------
