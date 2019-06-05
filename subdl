@@ -39,7 +39,8 @@ checkimdbid() {
 while getopts r:cne:i:s:l: opt
 do
 	case $opt in
-		r) rows="$OPTARG"               ;;
+		r) checknum "$OPTARG"
+		   rows="$OPTARG"               ;;
 		c) cols="0"                     ;;
 		n) dontask="1"                  ;;
 		e) checknum "$OPTARG"
@@ -68,18 +69,10 @@ then
 	query=$(urlencode "$*")
 fi
 
-if [ -z "$rows" ]
-then
+[ -z "$rows" ] && {
 	rows=$(( $(tput lines) - 2 ))
 	[ "$rows" -lt 4 ] && rows=4
-elif echo "$1" | grep -v '^[0-9]\+$' > /dev/null
-then
-	checknum "$rows"
-	[ "$rows" -eq 0 ] && {
-		echo results must be greater than zero.
-		exit 1
-	}
-fi
+}
 
 [ -z "$cols" ] && cols=$(tput cols)
 
@@ -92,7 +85,12 @@ ${sublanguageid:+/sublanguageid-}${sublanguageid}" > "$tmpfile"
 
 [ -z "$dontask" ] && {
 	jq -e -j --argjson rows "$rows" --argjson cols "$cols" '
-	del(.[$rows:]) |
+	if $rows != 0
+	then
+		del(.[$rows:])
+	else
+		.
+	end |
 	if length == 0
 	then
 		"no result.\n" | halt_error(1)
@@ -115,10 +113,12 @@ ${sublanguageid:+/sublanguageid-}${sublanguageid}" > "$tmpfile"
 	read -r nu
 }
 
-[ -z "$nu" ] && {
+if [ -z "$nu" ]
+then
 	nu=0
-}
-checknum "$nu"
+else
+	checknum "$nu"
+fi
 
 dlurl=$(jq -j --argjson nu "$nu" '.[$nu].SubDownloadLink' "$tmpfile")
 filename=$(jq -j --argjson nu "$nu" '.[$nu].SubFileName' "$tmpfile")
