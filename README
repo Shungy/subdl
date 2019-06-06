@@ -39,7 +39,7 @@ Dependencies
 * grep
 * gzip
 * util-linux (hexdump)
-* coreutils (tr, mktemp)
+* coreutils (tr, mktemp, cat)
 * ncurses (tput)
 
 Installation
