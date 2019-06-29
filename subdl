@@ -9,7 +9,7 @@ trap 'rm "$tmpfile"' 0 1 15
 
 urlencode() {
 	printf "%s" "$1" | tr '[:upper:]' '[:lower:]' | \
-		printf "%%%s" $(hexdump -v -e '/1 "%20x\n"') # Do NOT quote!
+		printf "%%%s" $(od -v -t x1 -An -) # Do NOT quote!
 }
 
 checknum() {

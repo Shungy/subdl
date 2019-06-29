@@ -38,8 +38,7 @@ Dependencies
 * curl
 * grep
 * gzip
-* util-linux (hexdump)
-* coreutils (tr, mktemp, cat)
+* coreutils (tr, mktemp, cat, od)
 * ncurses (tput)
 
 Installation
