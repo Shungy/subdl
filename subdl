@@ -1,8 +1,6 @@
 #!/bin/sh
-# License: MIT (Expat)
 
 usage="usage: ${0##*/} [-e episode] [-i imdbid] [-s season] [-l sublanguageid] [-r results] [-c (no cut)] [-n (non-interactive)] [query]"
-
 tmpfile=$(mktemp /tmp/subdl-XXXXXX)
 
 trap 'rm "$tmpfile"' 0 1 15
