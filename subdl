@@ -55,7 +55,7 @@ set_query() {
 
 define_address() {
 	printf 'http://rest.opensubtitles.org/search%s%s%s%s%s'    \
-	       "${episode:+/episode-}"                             \
+	       "${episode:+/episode-}${episode}"                   \
 	       "${imdbid:+/imdbid-}${imdbid}"                      \
 	       "${query:+/query-}${query}"                         \
 	       "${season:+/season-}${season}"                      \
