@@ -6,33 +6,61 @@ tmpfile=$(mktemp /tmp/subdl-XXXXXX)
 trap 'rm "$tmpfile"' 0 1 15
 
 url_encode() {
+	# Query must be URL encoded
 	printf "%s" "$1" | tr '[:upper:]' '[:lower:]' | \
 		printf "%%%s" $(od -v -t x1 -An -) # Do NOT quote!
 }
 
 check_num() {
 	echo "$1" | grep '^[0-9]\+$' > /dev/null || {
-		echo season, episode, results must be natural numbers.
+		echo Season, episode, and results must be natural numbers.
 		exit 1
 	}
 }
 
 check_lang() {
 	echo "$1" | grep '^[a-z]\{3\}\(,[a-z]\{3\}\)*$' > /dev/null || {
-		echo language code must be 3 letters.
-		echo multiple languages are separated with comma.
+		echo Language code must be 3 letters.
+		echo Multiple languages must be separated with a comma.
 		exit 1
 	}
 }
 
 check_imdbid() {
 	echo "$1" | grep '^[0-9]\{7\}$' > /dev/null || {
-		echo imdbid must be 7 figures.
-		echo imdbid should exclude property prefix.
+		echo Imdbid must be 7 figures.
+		echo Imdbid must exclude property prefix.
 		exit 1
 	}
 }
 
+check_args() {
+	# Either a query or imdbid must exist.
+	[ -z "$1" ] && [ -z "$imdbid" ] && {
+		echo "$usage"
+		exit 1
+	}
+}
+
+set_query() {
+	# Strip the location prefix if the query is a file.
+	if [ -f "$1" ]
+	then
+		query=$(url_encode "${1##*/}")
+	elif [ -n "$1" ]
+	then
+		query=$(url_encode "$*")
+	fi
+}
+
+define_address() {
+	printf 'http://rest.opensubtitles.org/search%s%s%s%s%s'    \
+	       "${episode:+/episode-}"                             \
+	       "${imdbid:+/imdbid-}${imdbid}"                      \
+	       "${query:+/query-}${query}"                         \
+	       "${season:+/season-}${season}"                      \
+	       "${sublanguageid:+/sublanguageid-}${sublanguageid}"
+}
 
 while getopts r:cne:i:s:l: opt
 do
@@ -71,20 +99,9 @@ do
 done
 shift $(( OPTIND - 1 ))
 
-# Either query or imdbid should exist for a meaningful search
-[ -z "$1" ] && [ -z "$imdbid" ] && {
-	echo "$usage"
-	exit 1
-}
+check_args
+set_query
 
-# If query is a filename strip the location prefix
-if [ -f "$1" ]
-then
-	query=$(url_encode "${1##*/}")
-elif [ -n "$1" ]
-then
-	query=$(url_encode "$*")
-fi
 
 [ -z "$rows" ] && {
 	rows=$(( $(tput lines) - 2 ))
@@ -93,12 +110,7 @@ fi
 
 [ -z "$cols" ] && cols=$(tput cols)
 
-curl -s -S -A 'TemporaryUserAgent' "https://rest.opensubtitles.org/search\
-${episode:+/episode-}${episode}\
-${imdbid:+/imdbid-}${imdbid}\
-${query:+/query-}${query}\
-${season:+/season-}${season}\
-${sublanguageid:+/sublanguageid-}${sublanguageid}" > "$tmpfile"
+curl -s -S -A 'TemporaryUserAgent' "$(define_address)" > "$tmpfile"
 
 [ -z "$dontask" ] && {
 	jq -e -j --argjson rows "$rows" --argjson cols "$cols" '
