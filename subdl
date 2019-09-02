@@ -5,19 +5,19 @@ tmpfile=$(mktemp /tmp/subdl-XXXXXX)
 
 trap 'rm "$tmpfile"' 0 1 15
 
-urlencode() {
+url_encode() {
 	printf "%s" "$1" | tr '[:upper:]' '[:lower:]' | \
 		printf "%%%s" $(od -v -t x1 -An -) # Do NOT quote!
 }
 
-checknum() {
+check_num() {
 	echo "$1" | grep '^[0-9]\+$' > /dev/null || {
 		echo season, episode, results must be natural numbers.
 		exit 1
 	}
 }
 
-checklang() {
+check_lang() {
 	echo "$1" | grep '^[a-z]\{3\}\(,[a-z]\{3\}\)*$' > /dev/null || {
 		echo language code must be 3 letters.
 		echo multiple languages are separated with comma.
@@ -25,7 +25,7 @@ checklang() {
 	}
 }
 
-checkimdbid() {
+check_imdbid() {
 	echo "$1" | grep '^[0-9]\{7\}$' > /dev/null || {
 		echo imdbid must be 7 figures.
 		echo imdbid should exclude property prefix.
@@ -37,34 +37,53 @@ checkimdbid() {
 while getopts r:cne:i:s:l: opt
 do
 	case $opt in
-		r) checknum "$OPTARG"
-		   rows="$OPTARG"               ;;
-		c) cols="0"                     ;;
-		n) dontask="1"                  ;;
-		e) checknum "$OPTARG"
-		   episode="$OPTARG"            ;;
-		i) checkimdbid "$OPTARG"
-		   imdbid="$OPTARG"             ;;
-		s) checknum "$OPTARG"
-		   season="$OPTARG"             ;;
-		l) checklang "$OPTARG"
-		   sublanguageid="$OPTARG"      ;;
-		\?) echo "$usage" ; exit 1      ;;
+		r)
+			check_num "$OPTARG"
+			rows="$OPTARG"
+			;;
+		c)
+			cols="0"
+			;;
+		n)
+			dontask="1"
+			;;
+		e)
+			check_num "$OPTARG"
+			episode="$OPTARG"
+			;;
+		i)
+			check_imdbid "$OPTARG"
+			imdbid="$OPTARG"
+			;;
+		s)
+			check_num "$OPTARG"
+			season="$OPTARG"
+			;;
+		l)
+			check_lang "$OPTARG"
+			sublanguageid="$OPTARG"
+			;;
+		\?)
+			echo "$usage"
+			exit
+			;;
 	esac
 done
 shift $(( OPTIND - 1 ))
 
+# Either query or imdbid should exist for a meaningful search
 [ -z "$1" ] && [ -z "$imdbid" ] && {
 	echo "$usage"
 	exit 1
 }
 
+# If query is a filename strip the location prefix
 if [ -f "$1" ]
 then
-	query=$(urlencode "${1##*/}")
+	query=$(url_encode "${1##*/}")
 elif [ -n "$1" ]
 then
-	query=$(urlencode "$*")
+	query=$(url_encode "$*")
 fi
 
 [ -z "$rows" ] && {
@@ -115,7 +134,7 @@ if [ -z "$nu" ]
 then
 	nu=0
 else
-	checknum "$nu"
+	check_num "$nu"
 fi
 
 dlurl=$(jq -j --argjson nu "$nu" '.[$nu].SubDownloadLink' "$tmpfile")
