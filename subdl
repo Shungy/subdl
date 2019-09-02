@@ -1,6 +1,6 @@
 #!/bin/sh
 
-usage="usage: ${0##*/} [-e episode] [-i imdbid] [-s season] [-l sublanguageid] [-r results] [-c (no cut)] [-n (non-interactive)] [query]"
+usage="usage: ${0##*/} [-e episode] [-i imdbid] [-s season] [-l sublanguageid] [-c (no cut)] [-n (non-interactive)] [query]"
 tmpfile=$(mktemp /tmp/subdl-XXXXXX)
 
 trap 'rm "$tmpfile"' 0 1 15
@@ -13,7 +13,7 @@ url_encode() {
 
 check_num() {
 	echo "$1" | grep '^[0-9]\+$' > /dev/null || {
-		echo Season, episode, and results must be natural numbers.
+		echo Season and episode must be natural numbers.
 		exit 1
 	}
 }
@@ -62,13 +62,9 @@ define_address() {
 	       "${sublanguageid:+/sublanguageid-}${sublanguageid}"
 }
 
-while getopts r:cne:i:s:l: opt
+while getopts cne:i:s:l: opt
 do
 	case $opt in
-		r)
-			check_num "$OPTARG"
-			rows="$OPTARG"
-			;;
 		c)
 			cols="0"
 			;;
@@ -99,27 +95,16 @@ do
 done
 shift $(( OPTIND - 1 ))
 
-check_args
-set_query
-
-
-[ -z "$rows" ] && {
-	rows=$(( $(tput lines) - 2 ))
-	[ "$rows" -lt 4 ] && rows=4
-}
+check_args "$@"
+set_query "$@"
 
 [ -z "$cols" ] && cols=$(tput cols)
 
 curl -s -S -A 'TemporaryUserAgent' "$(define_address)" > "$tmpfile"
 
 [ -z "$dontask" ] && {
-	jq -e -j --argjson rows "$rows" --argjson cols "$cols" '
-	if $rows != 0
-	then
-		del(.[$rows:])
-	else
-		.
-	end |
+	jq -e -j --argjson cols "$cols" '
+	. |
 	if length == 0
 	then
 		"no result.\n" | halt_error(1)
