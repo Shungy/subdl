@@ -1,42 +1,42 @@
 #!/bin/sh
 
-usage="usage: ${0##*/} [-e episode] [-i imdbid] [-s season] [-l sublanguageid] [-n (non-interactive)] [query]"
+usage="usage: ${0##*/} [-e episode] [-i imdbid] [-s season] [-l sublanguageid] [-n] [query]"
 tmpfile=$(mktemp /tmp/subdl-XXXXXX)
 trap 'rm "$tmpfile"' 0 1 15
 
 url_encode() {
-	# Query must be URL encoded
-	printf "%s" "$1" | tr '[:upper:]' '[:lower:]' | \
+	# Query must be URL encoded to handle reserved characters
+	printf '%s' "$1" | tr '[:upper:]' '[:lower:]' | \
 		printf "%%%s" $(od -v -t x1 -An -) # Do NOT quote!
 }
 
 check_num() {
-	echo "$1" | grep '^[0-9]\+$' > /dev/null || {
-		echo Season and episode must be natural numbers.
+	printf '%s' "$1" | grep '^[0-9]\+$' > /dev/null || {
+		printf 'Season and episode must be natural numbers.\n'
 		exit 1
 	}
 }
 
 check_lang() {
-	echo "$1" | grep '^[a-z]\{3\}\(,[a-z]\{3\}\)*$' > /dev/null || {
-		echo Language code must be 3 letters.
-		echo Multiple languages must be separated with a comma.
+	printf '%s' "$1" | grep '^[a-z]\{3\}\(,[a-z]\{3\}\)*$' > /dev/null || {
+		printf 'Language code must be 3 letters.\n'
+		printf 'Multiple languages must be separated with a comma.\n'
 		exit 1
 	}
 }
 
 check_imdbid() {
-	echo "$1" | grep '^[0-9]\{7\}$' > /dev/null || {
-		echo Imdbid must be 7 figures.
-		echo Imdbid must exclude property prefix.
+	printf '%s' "$1" | grep '^[0-9]\{7\}$' > /dev/null || {
+		printf 'Imdbid must be 7 figures.\n'
+		printf 'Imdbid must exclude property prefix.\n'
 		exit 1
 	}
 }
 
 check_args() {
-	# Either a query or imdbid must exist.
+	# Either a query or an imdbid must exist.
 	[ -z "$1" ] && [ -z "$imdbid" ] && {
-		echo "$usage"
+		printf '%s\n' "$usage"
 		exit 1
 	}
 }
@@ -78,8 +78,10 @@ parse_response() {
 
 ask_num() {
 	parse_response || {
-		cat "$tmpfile"
-		printf '\n'
+		while read -r LINE
+		do
+			printf '%s\n' "$LINE"
+		done < "$tmpfile"
 		exit 1
 	}
 	printf "Subtitle number (Ctrl-c to cancel): "
@@ -111,7 +113,7 @@ do
 			sublanguageid="$OPTARG"
 			;;
 		\?)
-			echo "$usage"
+			printf '%s\n' "$usage"
 			exit
 			;;
 	esac
@@ -124,4 +126,4 @@ curl -s -S -A 'TemporaryUserAgent' "$(set_addr)" > "$tmpfile"
 [ -z "$dontask" ] && ask_num
 dlurl=$(jq -j --argjson num "${num:-0}" '.[$num].SubDownloadLink' "$tmpfile")
 filename=$(jq -j --argjson num "${num:-0}" '.[$num].SubFileName' "$tmpfile")
-curl -s -S "$dlurl" | gzip -d > "$filename" && echo Fetched "$filename"
+curl -s -S "$dlurl" | gzip -d > "$filename" && printf 'Fetched %s.\n' "$filename"

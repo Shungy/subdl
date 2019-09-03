@@ -2,7 +2,7 @@ subdl
 =====
 
 A simple shell script that downloads subtitles from opensubtitles.org.
-See this page for more information:
+See the following page for more information:
 https://forum.opensubtitles.org/viewtopic.php?f=8&t=16453#p39771
 
 Synopsis
@@ -13,13 +13,13 @@ Synopsis
 Options
 -------
 
--e episode     Episode number of a TV show.
--s season      Season number of a TV show.
--i IMDBid      IMDB movie title ID. You can get it from IMDB movie page
-               (i.e. https://www.imdb.com/title/tt#######).
--l language    Three letter language code. Multiple languages can be
-               combined with comma (e.g. -l eng,tur).
--n             First result it downloaded without any prompt
+	-e episode     Episode number of a TV show.
+	-s season      Season number of a TV show.
+	-i IMDBid      IMDB movie title ID. You can get it from IMDB movie page
+	               (i.e. https://www.imdb.com/title/tt#######).
+	-l language    Three letter language code. Multiple languages can be
+	               combined with comma (e.g. -l eng,tur).
+	-n             First result it downloaded without any prompt
 
 Examples
 --------
@@ -35,10 +35,9 @@ Dependencies
 * gzip
 * mktemp
 * POSIX utils
-	* tr
-	* cat
-	* od
-	* grep
+  * tr
+  * od
+  * grep
 
 Installation
 ------------
