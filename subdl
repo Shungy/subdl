@@ -53,13 +53,31 @@ set_query() {
 	fi
 }
 
-define_address() {
+define_addr() {
 	printf 'http://rest.opensubtitles.org/search%s%s%s%s%s'    \
 	       "${episode:+/episode-}${episode}"                   \
 	       "${imdbid:+/imdbid-}${imdbid}"                      \
 	       "${query:+/query-}${query}"                         \
 	       "${season:+/season-}${season}"                      \
 	       "${sublanguageid:+/sublanguageid-}${sublanguageid}"
+}
+
+parse_json() {
+	jq -e -j --argjson cols "$cols" '
+	. |
+	if length == 0
+	then
+		"no result.\n" | halt_error(1)
+	else
+		[[range(length) | tostring] , [.[].SubFileName]] |
+		transpose | .[] | " " +  .[0] + ": " + .[1] |
+		if $cols != 0
+		then
+			.[:$cols] | . + "\n"
+		else
+			. + "\n"
+		end
+	end' "$tmpfile"
 }
 
 while getopts cne:i:s:l: opt
@@ -100,29 +118,14 @@ set_query "$@"
 
 [ -z "$cols" ] && cols=$(tput cols)
 
-curl -s -S -A 'TemporaryUserAgent' "$(define_address)" > "$tmpfile"
+curl -s -S -A 'TemporaryUserAgent' "$(define_addr)" > "$tmpfile"
 
 [ -z "$dontask" ] && {
-	jq -e -j --argjson cols "$cols" '
-	. |
-	if length == 0
-	then
-		"no result.\n" | halt_error(1)
-	else
-		[[range(length) | tostring] , [.[].SubFileName]] |
-		transpose | .[] | " " +  .[0] + ": " + .[1] |
-		if $cols != 0
-		then
-			.[:$cols] | . + "\n"
-		else
-			. + "\n"
-		end
-	end' "$tmpfile" || {
+	parse_json || {
 		cat "$tmpfile"
-		printf "\n"
+		printf '\n'
 		exit 1
 	}
-
 	printf "Subtitle number: "
 	read -r nu
 }
