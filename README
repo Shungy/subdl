@@ -18,12 +18,8 @@ Options
 -i IMDBid      IMDB movie title ID. You can get it from IMDB movie page
                (i.e. https://www.imdb.com/title/tt#######).
 -l language    Three letter language code. Multiple languages can be
-               combined with comma (e.g. ``-l eng,tur'').
--r results     Number of max. results that will be listed for selection.
-               By default the results will likely fit into your screen.
--c             Disables chopping long lines.
--n             Disables manual selecting. The first result will be
-               automatically selected
+               combined with comma (e.g. -l eng,tur).
+-n             First result it downloaded without any prompt
 
 Examples
 --------
@@ -36,10 +32,13 @@ Dependencies
 
 * jq
 * curl
-* grep
 * gzip
-* coreutils (tr, mktemp, cat, od)
-* ncurses (tput)
+* mktemp
+* POSIX utils
+	* tr
+	* cat
+	* od
+	* grep
 
 Installation
 ------------

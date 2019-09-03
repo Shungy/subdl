@@ -2,7 +2,6 @@
 
 usage="usage: ${0##*/} [-e episode] [-i imdbid] [-s season] [-l sublanguageid] [-n (non-interactive)] [query]"
 tmpfile=$(mktemp /tmp/subdl-XXXXXX)
-
 trap 'rm "$tmpfile"' 0 1 15
 
 url_encode() {
@@ -62,7 +61,7 @@ set_addr() {
 	       "${sublanguageid:+/sublanguageid-}${sublanguageid}"
 }
 
-parse_json() {
+parse_response() {
 	jq -e -j '
 		. |
 		if length == 0
@@ -78,7 +77,7 @@ parse_json() {
 }
 
 ask_num() {
-	parse_json || {
+	parse_response || {
 		cat "$tmpfile"
 		printf '\n'
 		exit 1
