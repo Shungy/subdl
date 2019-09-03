@@ -53,7 +53,7 @@ set_query() {
 	fi
 }
 
-define_addr() {
+set_addr() {
 	printf 'http://rest.opensubtitles.org/search%s%s%s%s%s'    \
 	       "${episode:+/episode-}${episode}"                   \
 	       "${imdbid:+/imdbid-}${imdbid}"                      \
@@ -64,21 +64,35 @@ define_addr() {
 
 parse_json() {
 	jq -e -j '
-	. |
-	if length == 0
-	then
-		"no result.\n" | halt_error(1)
-	else
-		[[range(length) | tostring] , [.[].SubFileName]] |
-		transpose | .[] | " " +  .[0] + ": " + .[1] |
-		. + "\n"
-	end' "$tmpfile"
+		. |
+		if length == 0
+		then
+			"no result.\n" | halt_error(1)
+		else
+			[[range(length) | tostring] ,
+			[.[].SubFileName] , [.[].SubLanguageID]] |
+			transpose | .[] | " " + .[0] + " [" + .[2] +
+			"]: " + .[1] | . + "\n"
+		end
+	' "$tmpfile"
+}
+
+ask_num() {
+	parse_json || {
+		cat "$tmpfile"
+		printf '\n'
+		exit 1
+	}
+	printf "Subtitle number (Ctrl-c to cancel): "
+	read -r num
+	check_num "$num"
 }
 
 while getopts ne:i:s:l: opt
 do
 	case $opt in
 		n)
+			# Download the first result
 			dontask="1"
 			;;
 		e)
@@ -103,31 +117,12 @@ do
 			;;
 	esac
 done
-shift $(( OPTIND - 1 ))
 
+shift $(( OPTIND - 1 ))
 check_args "$@"
 set_query "$@"
-
-curl -s -S -A 'TemporaryUserAgent' "$(define_addr)" > "$tmpfile"
-
-[ -z "$dontask" ] && {
-	parse_json || {
-		cat "$tmpfile"
-		printf '\n'
-		exit 1
-	}
-	printf "Subtitle number: "
-	read -r nu
-}
-
-if [ -z "$nu" ]
-then
-	nu=0
-else
-	check_num "$nu"
-fi
-
-dlurl=$(jq -j --argjson nu "$nu" '.[$nu].SubDownloadLink' "$tmpfile")
-filename=$(jq -j --argjson nu "$nu" '.[$nu].SubFileName' "$tmpfile")
-
+curl -s -S -A 'TemporaryUserAgent' "$(set_addr)" > "$tmpfile"
+[ -z "$dontask" ] && ask_num
+dlurl=$(jq -j --argjson num "${num:-0}" '.[$num].SubDownloadLink' "$tmpfile")
+filename=$(jq -j --argjson num "${num:-0}" '.[$num].SubFileName' "$tmpfile")
 curl -s -S "$dlurl" | gzip -d > "$filename" && echo Fetched "$filename"
