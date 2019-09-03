@@ -19,7 +19,7 @@ Options
 	               (i.e. https://www.imdb.com/title/tt#######).
 	-l language    Three letter language code. Multiple languages can be
 	               combined with comma (e.g. -l eng,tur).
-	-n             First result it downloaded without any prompt
+	-n             First result is downloaded without any prompts
 
 Examples
 --------
@@ -30,14 +30,11 @@ Examples
 Dependencies
 ------------
 
+* POSIX shell
 * jq
 * curl
 * gzip
 * mktemp
-* POSIX utils
-  * tr
-  * od
-  * grep
 
 Installation
 ------------

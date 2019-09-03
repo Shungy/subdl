@@ -5,7 +5,7 @@ tmpfile=$(mktemp /tmp/subdl-XXXXXX)
 trap 'rm "$tmpfile"' 0 1 15
 
 url_encode() {
-	# Query must be URL encoded to handle reserved characters
+	# Query must be URL encoded to handle reserved characters.
 	printf '%s' "$1" | tr '[:upper:]' '[:lower:]' | \
 		printf "%%%s" $(od -v -t x1 -An -) # Do NOT quote!
 }
@@ -45,14 +45,15 @@ set_query() {
 	# Strip the location prefix if the query is a file.
 	if [ -f "$1" ]
 	then
-		query=$(url_encode "${1##*/}")
+		url_encode "${1##*/}"
 	elif [ -n "$1" ]
 	then
-		query=$(url_encode "$*")
+		url_encode "$*"
 	fi
 }
 
 set_addr() {
+	# Print slash only when the relevant variable exists.
 	printf 'http://rest.opensubtitles.org/search%s%s%s%s%s'    \
 	       "${episode:+/episode-}${episode}"                   \
 	       "${imdbid:+/imdbid-}${imdbid}"                      \
@@ -61,36 +62,46 @@ set_addr() {
 	       "${sublanguageid:+/sublanguageid-}${sublanguageid}"
 }
 
-parse_response() {
+display_results() {
 	jq -e -j '
 		. |
 		if length == 0
 		then
-			"no result.\n" | halt_error(1)
+			"no result.\n" | halt_error
 		else
 			[[range(length) | tostring] ,
 			[.[].SubFileName] , [.[].SubLanguageID]] |
 			transpose | .[] | " " + .[0] + " [" + .[2] +
 			"]: " + .[1] | . + "\n"
 		end
-	' "$tmpfile"
+	' "$tmpfile" || {
+		# If there is a server error, the error message is displayed in
+		# plain text instead of JSON. This causes jq to fail parsing the
+		# server response. In that case the file is output to terminal
+		# to show the error.
+		cat "$tmpfile"
+		exit 1
+	}
 }
 
 ask_num() {
-	parse_response || {
-		while read -r LINE
-		do
-			printf '%s\n' "$LINE"
-		done < "$tmpfile"
-		exit 1
-	}
 	printf "Subtitle number (Ctrl-c to cancel): "
 	read -r num
 	check_num "$num"
 }
 
+get_sub_info() {
+	# Get the first result (number zero) if '-n flag' is supplied.
+	# TODO: Check if the num exists
+	jq -j --argjson num "${num:-0}" '
+		.[$num] | [ .SubDownloadLink , "\t" , .SubFileName ] | .[]
+	' "$tmpfile"
+}
+
 while getopts ne:i:s:l: opt
 do
+	# Set variables from command line options. Also do sanity
+	# checks to not send an erronous request to the server.
 	case $opt in
 		n)
 			# Download the first result
@@ -118,12 +129,31 @@ do
 			;;
 	esac
 done
-
 shift $(( OPTIND - 1 ))
+
+# Make sure that proper arguments are supplied.
 check_args "$@"
-set_query "$@"
-curl -s -S -A 'TemporaryUserAgent' "$(set_addr)" > "$tmpfile"
+
+# Define the 'query' and 'address' variables.
+query=$(set_query "$@")
+addr=$(set_addr)
+
+# Get the query response page from the server.
+curl -s -S -A 'TemporaryUserAgent' "$addr" > "$tmpfile"
+
+# Display list of available subtitles by parsing the server response.
+display_results
+
+# Prompt for user input if '-n flag' is not provided.
 [ -z "$dontask" ] && ask_num
-dlurl=$(jq -j --argjson num "${num:-0}" '.[$num].SubDownloadLink' "$tmpfile")
-filename=$(jq -j --argjson num "${num:-0}" '.[$num].SubFileName' "$tmpfile")
-curl -s -S "$dlurl" | gzip -d > "$filename" && printf 'Fetched %s.\n' "$filename"
+
+# Parse the query response page one more time to get the download URL and
+# the file name in a tab-delineated format.
+IFS='	' # IFS='\t'
+read -r dlurl filename << EOF
+$(get_sub_info)
+EOF
+
+# Finally download the subtitle file.
+curl -s -S "$dlurl" | gzip -d > "$filename" &&
+	printf 'Fetched %s.\n' "$filename"
