@@ -1,6 +1,6 @@
 #!/bin/sh
 
-usage="usage: ${0##*/} [-e episode] [-i imdbid] [-s season] [-l sublanguageid] [-c (no cut)] [-n (non-interactive)] [query]"
+usage="usage: ${0##*/} [-e episode] [-i imdbid] [-s season] [-l sublanguageid] [-n (non-interactive)] [query]"
 tmpfile=$(mktemp /tmp/subdl-XXXXXX)
 
 trap 'rm "$tmpfile"' 0 1 15
@@ -63,7 +63,7 @@ define_addr() {
 }
 
 parse_json() {
-	jq -e -j --argjson cols "$cols" '
+	jq -e -j '
 	. |
 	if length == 0
 	then
@@ -71,21 +71,13 @@ parse_json() {
 	else
 		[[range(length) | tostring] , [.[].SubFileName]] |
 		transpose | .[] | " " +  .[0] + ": " + .[1] |
-		if $cols != 0
-		then
-			.[:$cols] | . + "\n"
-		else
-			. + "\n"
-		end
+		. + "\n"
 	end' "$tmpfile"
 }
 
-while getopts cne:i:s:l: opt
+while getopts ne:i:s:l: opt
 do
 	case $opt in
-		c)
-			cols="0"
-			;;
 		n)
 			dontask="1"
 			;;
@@ -115,8 +107,6 @@ shift $(( OPTIND - 1 ))
 
 check_args "$@"
 set_query "$@"
-
-[ -z "$cols" ] && cols=$(tput cols)
 
 curl -s -S -A 'TemporaryUserAgent' "$(define_addr)" > "$tmpfile"
 
