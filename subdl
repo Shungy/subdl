@@ -5,7 +5,7 @@ usage="usage: ${0##*/} [-e episode] [-i imdbid] [-s season] [-l sublanguageid] [
 url_encode() {
 	# Query must be URL encoded to handle reserved characters.
 	printf '%s' "$1" | tr '[:upper:]' '[:lower:]' | \
-		printf "%%%s" $(od -v -t x1 -An -) # Do NOT quote!
+		printf '%%%s' $(od -v -t x1 -An -) # Do NOT quote!
 }
 
 check_num() {
