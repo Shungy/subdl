@@ -131,7 +131,7 @@ unset IFS
 }
 
 # List subtitles for selection.
-printf '%s\n' "$@" | cut -f 1 | nl -w 4 -s ': '
+[ -z "$num" ] && printf '%s\n' "$@" | cut -f 1 | nl -w 4 -s ': '
 
 get_num
 
