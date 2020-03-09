@@ -65,21 +65,10 @@ parse_results() {
 		then
 			"No results found.\n" | halt_error
 		else
-			.[] | [ .SubFileName + "\t" + .SubDownloadLink ] | .[]
+			.[] | [ .SubLanguageID + ":\t" + .SubFileName +
+				"\t" + .SubDownloadLink ] | .[]
 		end
 	'
-}
-
-get_num() {
-	[ -z "$num" ] && {
-		printf "Subtitle number (Ctrl-c to cancel): "
-		read -r num
-		check_num "$num"
-		[ "$num" -gt "$#" ] || [ "$num" -le 0 ] && {
-			printf 'Subtitle does not exist.\n'
-			exit 1
-		}
-	}
 }
 
 while getopts ne:i:s:l: opt
@@ -131,13 +120,20 @@ unset IFS
 }
 
 # List subtitles for selection.
-[ -z "$num" ] && printf '%s\n' "$@" | cut -f 1 | nl -w 4 -s ': '
-
-get_num
+[ -z "$num" ] && {
+	printf '%s\n' "$@" | cut -f 1,2 | nl -w 3 -s '. ' | tr '\t' ' '
+	printf "Subtitle number (Ctrl-c to cancel): "
+	read -r num
+	check_num "$num"
+	[ "$num" -gt "$#" ] || [ "$num" -le 0 ] && {
+		printf 'Subtitle does not exist.\n'
+		exit 1
+	}
+}
 
 IFS=$(printf '\t')
 read -r filename dlurl << EOF
-$(eval printf '%s' \"'$'"${num}"\")
+$(eval printf '%s' \"'$'"${num}"\" | cut -f '2,3')
 EOF
 
 # Finally download the subtitle file.
