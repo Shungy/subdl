@@ -38,4 +38,5 @@ Dependencies
 Installation
 ------------
 
-	sudo make install
+	cp subdl /usr/local/bin
+	chmod +x /usr/local/bin/subdl
